@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<binding:binding id="kaiterra" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:binding="https://openhab.org/schemas/binding/v1.0.0"
+	xsi:schemaLocation="https://openhab.org/schemas/binding/v1.0.0 https://openhab.org/schemas/binding-1.0.0.xsd">
+
+	<name>Kaiterra API Binding</name>
+	<description>Binding for Kaiterra public cloud API that provides access to LaserEgg devices.</description>
+	<author>Michał Boroński</author>
+
+</binding:binding>

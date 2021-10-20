@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<thing:thing-descriptions bindingId="kaiterra"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:thing="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0"
+	xsi:schemaLocation="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0 http://eclipse.org/smarthome/schemas/thing-description-1.0.0.xsd">
+
+	<thing-type id="laseregg2plus">
+		<label>Kaiterra Binding Thing</label>
+		<description>Sample thing for Kaiterra Binding</description>
+
+		<channels>
+			<channel id="temp" typeId="temp"/>
+			<channel id="rtvoc" typeId="rtvoc"/>
+			<channel id="humidity" typeId="humidity"/>
+			<channel id="pm25" typeId="pm25"/>
+			<channel id="pm10" typeId="pm10"/>
+		</channels>
+
+		<config-description-ref uri="thing-type:kaiterra:config"/>
+
+	</thing-type>
+	<channel-type id="temp" advanced="true">
+		<item-type>Number:Temperature</item-type>
+		<label>Temperature</label>
+		<description>Temperature</description>
+		<category>Temperature</category>
+		<state readOnly="true" pattern="%.1f %unit%"/>
+	</channel-type>
+
+	<channel-type id="humidity" advanced="true">
+		<item-type>Number:Dimensionless</item-type>
+		<label>Humidity</label>
+		<description>Current humidity</description>
+		<category>Humidity</category>
+		<state readOnly="true" min="0" max="100" pattern="%.1f %unit%"/>
+	</channel-type>
+
+	<channel-type id="rtvoc">
+		<item-type>Number</item-type>
+		<label>TVOC</label>
+		<description>Total Volatile Organic Compounds</description>
+		<category>TVOC</category>
+		<state readOnly="true" pattern="%d"/>
+	</channel-type>
+
+	<channel-type id="pm25">
+		<item-type>Number</item-type>
+		<label>PM2.5</label>
+		<description>PM 2.5 particles pollution level</description>
+		<category>PM2.5</category>
+		<state readOnly="true" pattern="%d"/>
+	</channel-type>
+
+	<channel-type id="pm10">
+		<item-type>Number</item-type>
+		<label>PM10</label>
+		<description>PM10 dust particles pollution level</description>
+		<category>PM10</category>
+		<state readOnly="true" pattern="%d"/>
+	</channel-type>
+
+</thing:thing-descriptions>

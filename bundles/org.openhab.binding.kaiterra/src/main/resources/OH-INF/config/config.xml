@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config-description:config-descriptions
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:config-description="http://eclipse.org/smarthome/schemas/config-description/v1.0.0"
+	xsi:schemaLocation="http://eclipse.org/smarthome/schemas/config-description/v1.0.0http://eclipse.org/smarthome/schemas/config-description-1.0.0.xsd">
+
+	<config-description uri="thing-type:kaiterra:config">
+		<parameter name="apiKey" type="text" required="true">
+			<label>API Token</label>
+			<description>Kaiterra API Token for communication with the server</description>
+		</parameter>
+		<parameter name="deviceUUID" type="text" required="true"
+			pattern="^([0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12})$">
+			<label>Device ID</label>
+			<description>Device ID number for communication (in UUID)</description>
+		</parameter>
+		<parameter name="refreshInterval" type="integer" required="false">
+			<label>Refresh interval</label>
+			<description>Kaiterra API refresh rate (in seconds)</description>
+		</parameter>
+		<parameter name="tempOffset" type="decimal" required="false">
+			<label>Temperature offset</label>
+			<description>Use to correct readings (in C degrees)</description>
+		</parameter>
+		<parameter name="humidityOffset" type="decimal" required="false">
+			<label>Humidity value offset</label>
+			<description>Use to correct readings (in %)</description>
+		</parameter>
+	</config-description>
+</config-description:config-descriptions>

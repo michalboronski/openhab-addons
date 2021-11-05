@@ -15,19 +15,12 @@ package org.openhab.binding.philipsair.internal;
 import static org.openhab.binding.philipsair.internal.PhilipsAirBindingConstants.*;
 import static org.openhab.core.thing.Thing.*;
 
-import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import javax.measure.quantity.Dimensionless;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
@@ -35,6 +28,8 @@ import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.jetty.client.HttpClient;
 import org.openhab.binding.philipsair.internal.connection.PhilipsAirAPIConnection;
 import org.openhab.binding.philipsair.internal.connection.PhilipsAirAPIException;
+import org.openhab.binding.philipsair.internal.connection.PhilipsAirCoapAPIConnection;
+import org.openhab.binding.philipsair.internal.connection.PhilipsAirHttpAPIConnection;
 import org.openhab.binding.philipsair.internal.model.PhilipsAirPurifierDataDTO;
 import org.openhab.binding.philipsair.internal.model.PhilipsAirPurifierDeviceDTO;
 import org.openhab.binding.philipsair.internal.model.PhilipsAirPurifierFiltersDTO;
@@ -64,6 +59,8 @@ import org.slf4j.LoggerFactory;
  * sent to one of the channels.
  *
  * @author Michal Boronski - Initial contribution
+ * @author Mmarcel Verpaalen- OH3 migration
+ *
  */
 @NonNullByDefault
 public class PhilipsAirHandler extends BaseThingHandler {
@@ -86,7 +83,6 @@ public class PhilipsAirHandler extends BaseThingHandler {
         if (connection == null) {
             return;
         }
-
         if (command == RefreshType.REFRESH) {
             logger.debug("Refreshing {}", channelUID);
             updateData(connection);
@@ -95,12 +91,9 @@ public class PhilipsAirHandler extends BaseThingHandler {
             PhilipsAirPurifierWritableDataDTO commandData = prepareCommandData(channelUID.getIdWithoutGroup(), command);
             try {
                 currentData = connection.sendCommand(channelUID.getIdWithoutGroup(), commandData);
-            } catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException
-                    | UnsupportedEncodingException | NoSuchAlgorithmException | NoSuchPaddingException
-                    | InvalidAlgorithmParameterException e) {
+            } catch (PhilipsAirAPIException e) {
                 logger.debug("An exception occured", e);
             }
-
             updateChannels();
         }
     }
@@ -184,7 +177,7 @@ public class PhilipsAirHandler extends BaseThingHandler {
     @Override
     public void initialize() {
         logger.debug("Start initializing!");
-        PhilipsAirConfiguration config = getAirPurifierConfig();
+        final PhilipsAirConfiguration config = getAirPurifierConfig();
         int refreshInterval = config.getRefreshInterval();
         if (refreshInterval < PhilipsAirConfiguration.MIN_REFESH_INTERVAL) {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR, "refreshInterval too low");
@@ -196,13 +189,23 @@ public class PhilipsAirHandler extends BaseThingHandler {
         if (callback != null) {
             callback.configurationUpdated(thing);
         }
-
-        connection = new PhilipsAirAPIConnection(config, httpClient);
-        updateStatus(ThingStatus.UNKNOWN);
-        if (this.refreshJob == null || this.refreshJob.isCancelled()) {
+        updateStatus(ThingStatus.OFFLINE);
+        scheduler.submit(() -> getConnection(config));
+        final ScheduledFuture<?> refreshJob = this.refreshJob;
+        if (refreshJob == null || refreshJob.isCancelled()) {
             logger.debug("Start refresh job at interval {} sec.", refreshInterval);
             this.refreshJob = scheduler.scheduleWithFixedDelay(this::updateThing, INITIAL_DELAY_IN_SECONDS,
                     refreshInterval, TimeUnit.SECONDS);
+        }
+    }
+
+    private void getConnection(PhilipsAirConfiguration config) {
+        if (SUPPORTED_COAP_THING_TYPES_UIDS.contains(getThing().getThingTypeUID())) {
+            logger.debug("Starting Coap based connectivity");
+            connection = new PhilipsAirCoapAPIConnection(config);
+        } else {
+            logger.debug("Starting HTTP based connectivity");
+            connection = new PhilipsAirHttpAPIConnection(config, httpClient);
         }
     }
 
@@ -216,17 +219,16 @@ public class PhilipsAirHandler extends BaseThingHandler {
     }
 
     private void updateThing() {
-        ThingStatus status = ThingStatus.OFFLINE;
-
-        if (connection != null) {
-            this.updateData(connection);
-            status = thing.getStatus();
-        } else {
-            logger.debug("Cannot update Air Purifier device {}", thing.getUID());
-            status = ThingStatus.OFFLINE;
+        try {
+            if (connection != null) {
+                this.updateData(connection);
+            } else {
+                logger.debug("Cannot update Air Purifier device {}", thing.getUID());
+                getConnection(getAirPurifierConfig());
+            }
+        } catch (Exception e) {
+            logger.info("Exception while updating thing: {}", e.getMessage(), e);
         }
-
-        updateStatus(status);
     }
 
     public void updateData(@Nullable PhilipsAirAPIConnection connection) {
@@ -298,7 +300,8 @@ public class PhilipsAirHandler extends BaseThingHandler {
             try {
                 value = getValue(channelUID, data, deviceInfo, filters);
             } catch (Exception e) {
-                logger.debug("AirPurifier doesn't provide {} measurement", channelUID.getAsString().toUpperCase());
+                logger.debug("AirPurifier doesn't provide '{}' measurement. To avoid this message unlink  channel: {}",
+                        channelUID.getId(), channelUID.getAsString());
                 return;
             }
 

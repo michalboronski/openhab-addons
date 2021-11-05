@@ -13,6 +13,7 @@
 package org.openhab.binding.philipsair.internal.connection;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 
 /**
  * The {@link PhilipsAirAPIException} is a communication exception for the
@@ -56,7 +57,7 @@ public class PhilipsAirAPIException extends RuntimeException {
      * @param message Detail message
      * @param cause The cause
      */
-    public PhilipsAirAPIException(String message, Throwable cause) {
+    public PhilipsAirAPIException(@Nullable String message, @Nullable Throwable cause) {
         super(message, cause);
     }
 }

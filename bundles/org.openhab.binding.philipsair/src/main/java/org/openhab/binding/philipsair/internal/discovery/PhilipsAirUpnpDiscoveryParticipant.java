@@ -72,7 +72,7 @@ public class PhilipsAirUpnpDiscoveryParticipant implements UpnpDiscoveryParticip
 
     @Override
     public Set<ThingTypeUID> getSupportedThingTypeUIDs() {
-        return SUPPORTED_THING_TYPES_UIDS;
+        return SUPPORTED_UPNP_THING_TYPES_UIDS;
     }
 
     @Override
